@@ -1,0 +1,3 @@
+[submodule "packages/agent"]
+	path = packages/agent
+	url = https://github.com/chymaera3301/Chymaera_Code_Agent.git

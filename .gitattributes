@@ -1,0 +1,7 @@
+# These are Linux-only build scripts/configs — always store and check them
+# out with LF endings, regardless of a contributor's core.autocrlf setting.
+*.sh text eol=lf
+PKGBUILD text eol=lf
+*.conf text eol=lf
+packages.x86_64 text eol=lf
+profiledef.sh text eol=lf

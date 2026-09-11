@@ -1,0 +1,193 @@
+# Chymaera Linux package list for mkarchiso.
+#
+# Section 1 is archiso's releng base list, unmodified (installer, live-boot,
+# and hardware-support packages: archlinux/archiso configs/releng/packages.x86_64).
+# Sections 2+ are Chymaera additions. Keeping releng's list intact rather than
+# trimming it avoids silently dropping live-boot/hardware support we haven't
+# individually verified we can do without.
+
+# --- releng base (unmodified) ---
+alsa-utils
+amd-ucode
+arch-install-scripts
+archinstall
+b43-fwcutter
+base
+bcachefs-tools
+bind
+bolt
+brltty
+btrfs-progs
+clonezilla
+cloud-init
+cryptsetup
+darkhttpd
+ddrescue
+dhcpcd
+diffutils
+dmidecode
+dmraid
+dnsmasq
+dosfstools
+e2fsprogs
+edk2-shell
+efibootmgr
+espeakup
+ethtool
+exfatprogs
+f2fs-tools
+fatresize
+foot-terminfo
+fsarchiver
+ghostty-terminfo
+gpart
+gpm
+gptfdisk
+grml-zsh-config
+grub
+hdparm
+hyperv
+intel-ucode
+irssi
+iw
+iwd
+jfsutils
+kitty-terminfo
+kmscon-terminfo
+ldns
+less
+lftp
+libfido2
+libusb-compat
+linux
+linux-atm
+linux-firmware
+linux-firmware-marvell
+livecd-sounds
+lsscsi
+lvm2
+lynx
+man-db
+man-pages
+mc
+mdadm
+memtest86+
+memtest86+-efi
+mkinitcpio
+mkinitcpio-archiso
+mkinitcpio-nfs-utils
+mmc-utils
+modemmanager
+mtools
+nano
+nbd
+ndisc6
+nfs-utils
+nilfs-utils
+nmap
+ntfsprogs
+nvme-cli
+open-iscsi
+open-vm-tools
+openconnect
+openpgp-card-tools
+openssh
+openvpn
+partclone
+parted
+partimage
+pcsclite
+ppp
+pptpclient
+pv
+qemu-guest-agent
+refind
+reflector
+rsync
+rxvt-unicode-terminfo
+screen
+sdparm
+sequoia-sq
+sg3_utils
+smartmontools
+sof-firmware
+squashfs-tools
+sudo
+syslinux
+systemd-resolvconf
+tcpdump
+terminus-font
+testdisk
+tmux
+tpm2-tools
+tpm2-tss
+udftools
+usb_modeswitch
+usbmuxd
+usbutils
+vim
+virtualbox-guest-utils-nox
+vpnc
+wireless-regdb
+wireless_tools
+wpa_supplicant
+wvdial
+xdg-utils
+xfsprogs
+xl2tpd
+zsh
+
+# --- KDE Plasma desktop (primary DE; plasma-meta per Chymaera_Code_Agent's
+# README "References" section) ---
+plasma-meta
+sddm
+dolphin
+konsole
+kate
+ark
+okular
+firefox
+
+# --- desktop networking/audio (releng is CLI-oriented; a desktop system
+# wants NetworkManager + PipeWire, in addition to releng's iwd/dhcpcd/modemmanager
+# for live-boot flexibility) ---
+networkmanager
+plasma-nm
+pipewire
+pipewire-alsa
+pipewire-pulse
+pipewire-jack
+wireplumber
+
+# --- BlackArch tooling ---
+# blackarch-keyring trusts the [blackarch] repo on the *installed* system,
+# not just the build host (see profile/pacman.conf).
+#
+# The category list below is a first-pass, curated selection (not
+# blackarch-full) — it has NOT yet been run through
+# packages/agent/blackarch_compat, which exists specifically to catch
+# install-time conflicts category-by-category before anything is baked in
+# here. Validate with that tool before treating this list as final; see
+# docs/ARCHITECTURE.md.
+blackarch-keyring
+blackarch-recon
+blackarch-scanner
+blackarch-webapp
+blackarch-proxy
+blackarch-sniffer
+blackarch-spoof
+blackarch-cracker
+blackarch-forensic
+blackarch-crypto
+blackarch-exploitation
+blackarch-fuzzer
+blackarch-networking
+blackarch-wireless
+blackarch-defensive
+
+# --- Chymaera Code Agent ---
+# chymaera-code-agent-git is built locally from the packages/agent submodule
+# into the [chymaera] repo — see scripts/build-agent-package.sh.
+git
+python
+chymaera-code-agent-git
