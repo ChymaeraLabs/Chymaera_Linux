@@ -137,8 +137,8 @@ xfsprogs
 xl2tpd
 zsh
 
-# --- KDE Plasma desktop (primary DE; plasma-meta per Chymaera_Code_Agent's
-# README "References" section) ---
+# --- KDE Plasma desktop (primary DE; plasma-meta per Sarina's README
+# "References" section) ---
 plasma-meta
 sddm
 dolphin
@@ -159,13 +159,21 @@ pipewire-pulse
 pipewire-jack
 wireplumber
 
+# --- graphical installer ---
+# calamares is AUR-only (not in core/extra/multilib) — built locally from
+# packages/pkgbuilds/calamares into the [chymaera] repo, same as sarina-git.
+# archinstall (releng base, above) stays available as a CLI/scripted option;
+# Calamares is meant to be the primary live-session installer. No Chymaera
+# branding/module config yet — see docs/ARCHITECTURE.md.
+calamares
+
 # --- BlackArch tooling ---
 # blackarch-keyring trusts the [blackarch] repo on the *installed* system,
 # not just the build host (see profile/pacman.conf).
 #
 # The category list below is a first-pass, curated selection (not
 # blackarch-full) — it has NOT yet been run through
-# packages/agent/blackarch_compat, which exists specifically to catch
+# packages/sarina/blackarch_compat, which exists specifically to catch
 # install-time conflicts category-by-category before anything is baked in
 # here. Validate with that tool before treating this list as final; see
 # docs/ARCHITECTURE.md.
@@ -185,9 +193,9 @@ blackarch-networking
 blackarch-wireless
 blackarch-defensive
 
-# --- Chymaera Code Agent ---
-# chymaera-code-agent-git is built locally from the packages/agent submodule
-# into the [chymaera] repo — see scripts/build-agent-package.sh.
+# --- Sarina ---
+# sarina-git is built locally from the packages/sarina submodule into the
+# [chymaera] repo — see scripts/build-sarina-package.sh.
 git
 python
-chymaera-code-agent-git
+sarina-git

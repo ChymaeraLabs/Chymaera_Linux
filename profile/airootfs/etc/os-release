@@ -1,0 +1,10 @@
+NAME="Chymaera Linux"
+PRETTY_NAME="Chymaera Linux"
+ID=chymaera
+ID_LIKE=arch
+BUILD_ID=rolling
+ANSI_COLOR="38;2;23;147;209"
+HOME_URL="https://github.com/chymaera3301/Chymaera_Linux"
+DOCUMENTATION_URL="https://github.com/chymaera3301/Chymaera_Linux/blob/main/README.md"
+SUPPORT_URL="https://github.com/chymaera3301/Chymaera_Linux/issues"
+BUG_REPORT_URL="https://github.com/chymaera3301/Chymaera_Linux/issues"
