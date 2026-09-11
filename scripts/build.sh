@@ -34,6 +34,12 @@ if ! command -v mkarchiso >/dev/null 2>&1; then
 fi
 
 echo "==> Checking submodules"
+# This script runs as root, but the repo may be owned by whatever user ran
+# scripts/build-local-packages.sh (makepkg refuses root, so that script runs
+# as a regular/build user) — git refuses to touch a repo it doesn't own
+# unless told it's safe. This script's only job is a throwaway root-level
+# build step, so trusting any directory here is fine.
+git config --global --add safe.directory '*'
 git -C "$repo_root" submodule update --init --recursive
 
 if [[ ! -f /etc/pacman.d/blackarch-mirrorlist ]]; then
