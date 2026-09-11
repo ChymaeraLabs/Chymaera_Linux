@@ -17,20 +17,26 @@ jobs:
       image: archlinux:latest
       options: --privileged
     steps:
+      # actions/checkout needs git already present in the job container,
+      # and archlinux:latest has nothing preinstalled.
+      - name: Install git (needed before checkout can run)
+        run: pacman -Sy --noconfirm --needed git
+
       # packages/sarina is a private repo (chymaera3301/Sarina). The default
       # GITHUB_TOKEN cannot check out a different private repo, so this
       # needs a PAT/deploy key with read access to it, stored as the
-      # SARINA_REPO_TOKEN secret. Until that secret is added, submodule
-      # checkout below will fail on private-repo access.
+      # SARINA_REPO_TOKEN secret. Until that secret is added, the main repo
+      # still checks out fine (falls back to the default token below), but
+      # the submodule checkout will fail on private-repo access.
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          token: ${{ secrets.SARINA_REPO_TOKEN }}
+          token: ${{ secrets.SARINA_REPO_TOKEN || github.token }}
 
-      - name: Install build dependencies
+      - name: Install remaining build dependencies
         run: |
-          pacman -Sy --noconfirm --needed archiso git curl base-devel sudo
+          pacman -Sy --noconfirm --needed archiso curl base-devel sudo
 
       - name: Build local packages (sarina-git, calamares; as non-root, makepkg refuses root)
         run: |
