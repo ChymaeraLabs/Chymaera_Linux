@@ -22,7 +22,7 @@ pkgdesc="Local-first Python reimplementation of the Claude Code agent architectu
 arch=('any')
 url="https://github.com/chymaera3301/Sarina"
 license=('unknown')
-depends=('python' 'python-fastapi' 'python-uvicorn' 'python-pydantic')
+depends=('python' 'python-fastapi' 'uvicorn' 'python-pydantic')
 optdepends=(
   'python-psutil: system memory/CPU/GPU telemetry for the Claude Code escalation trigger'
   'claude-code: hand off tasks to the real Claude Code CLI when local resources are insufficient'
