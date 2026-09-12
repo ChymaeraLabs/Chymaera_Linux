@@ -73,9 +73,23 @@ choice need an explicit entry in the "explicit provider choices" section.
 deliberate — `scripts/build.sh` substitutes an absolute path into a *work copy*
 so the checked-in file stays portable. Do not "fix" it to a real path.
 
-**`profile/airootfs/` contains real git symlinks (mode `120000`).** On Windows
-they may materialise as plain text files. Check with `git ls-files -s` before
-assuming they're broken, and never commit them as regular files.
+**`profile/airootfs/` contains real git symlinks (mode `120000`), and adding a
+new one from Windows is a trap.** This checkout has `core.symlinks=false`, so
+git stores them as plain files holding the target path and round-trips existing
+ones correctly. But a *new* one added with `git add` is recorded as a regular
+file — the ISO then ships a text file where systemd expects a symlink, and the
+unit silently does not work. To add one:
+
+```bash
+printf '/dev/null' > path/to/unit.service                 # the target, no newline
+git update-index --add --cacheinfo 120000,"$(git hash-object -w path/to/unit.service)",path/to/unit.service
+git commit                                                 # NOT 'git add -A' first
+```
+
+Both halves matter. Skip the file and a later `git add -A` records its absence
+and silently drops the entry — that happened once already, in `28e9bef`. Skip
+the `update-index` and you get mode `100644`. Always confirm with
+`git ls-tree HEAD <path>` that the mode really is `120000`.
 
 **Never ship `profile/airootfs/etc/passwd`, `shadow`, `group` or `gshadow`.**
 Releng does, and copying that pattern looks right — but mkarchiso overlays
