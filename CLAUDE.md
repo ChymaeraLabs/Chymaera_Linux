@@ -135,3 +135,59 @@ pacman -Sp --print-format '%r/%n' "${PKGS[@]}"   # must exit 0, print no provide
 Adding or removing whole tool *categories* is a product decision for the
 maintainer, not a build fix to apply unilaterally — it changes what the
 distro is.
+
+## Working alongside other Claude instances
+
+Other instances work on the sibling projects in this ecosystem — chiefly
+**Sarina** (`chymaera3301/Sarina`, vendored here as `packages/sarina`). They
+have repo access. This section is the coordination surface: keep it a
+**contract**, not a message log. Anything that is a passing note belongs in a
+commit message or the PR, not here — CLAUDE.md loads into every session, so
+churn here costs every future session context.
+
+If you change something on this list, say so in your commit message using the
+word `CONTRACT:` so the other side can grep for it.
+
+### What Chymaera consumes from Sarina
+
+`packages/pkgbuilds/sarina-git/PKGBUILD` builds the submodule directly. It
+will break if any of these move or disappear — verified present as of the
+`49d6c44` submodule pointer:
+
+| Path in the Sarina repo | Used for |
+| --- | --- |
+| `pyproject.toml` | `python -m build --wheel --no-isolation` |
+| `packaging/arch/sarina-service.service` | installed to `/usr/lib/systemd/system/` |
+| `packaging/arch/sarina.sysusers` | installed to `/usr/lib/sysusers.d/sarina.conf` |
+| `packaging/arch/service.env.example` | installed to `/etc/sarina/` |
+| `README.md` | installed to `/usr/share/doc/sarina-git/` |
+
+Runtime deps declared in that PKGBUILD are `python`, `python-fastapi`,
+`uvicorn`, `python-pydantic`. **These must stay in sync with Sarina's real
+dependencies**, and every one must exist in Arch's repos — Arch's uvicorn
+package has no `python-` prefix, which has already broken this build once.
+A dependency that is PyPI-only needs a PKGBUILD of its own here first.
+
+Entry points the ISO expects on `PATH`: `sarina`, `sarina-gui`,
+`sarina-service`.
+
+### What Chymaera needs Sarina to provide (not built yet)
+
+The ISO deliberately ships a small tool core and defers the rest. These are
+the capabilities that gap depends on — see `docs/ARCHITECTURE.md`:
+
+1. **Install-time tool selection** — ask what the machine is for, install
+   accordingly, rather than a category guess baked into the ISO.
+2. **Categorisation** — generate `.desktop` entries and Plasma menu
+   categories for tools that drop bare binaries into `/usr/bin`.
+3. **Data analysis** — the reason the agent is in the OS at all: making sense
+   of scan and capture output in place.
+4. **`blackarch_compat` against a real Docker daemon** — currently
+   unit-tested only. It is the safety check behind (1); until it has actually
+   run, treat any category the agent proposes as unvalidated.
+
+### Advancing the submodule
+
+`./scripts/update-sarina.sh` moves the pointer and stages it. After bumping,
+re-check the table above before committing — a green ISO build is the only
+thing that proves the packaging contract still holds.
