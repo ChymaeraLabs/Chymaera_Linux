@@ -200,7 +200,28 @@ the capabilities that gap depends on — see `docs/ARCHITECTURE.md`:
 1. **Install-time tool selection** — ask what the machine is for, install
    accordingly, rather than a category guess baked into the ISO.
 2. **Categorisation** — generate `.desktop` entries and Plasma menu
-   categories for tools that drop bare binaries into `/usr/bin`.
+   categories for tools that drop bare binaries into `/usr/bin`. Measured on
+   the 2026-09-12 ISO, so this is the real shape of the problem, not a guess:
+
+   | | Count |
+   | --- | --- |
+   | `.desktop` files in the image | 181 |
+   | …declaring a standard `Security` category | 2 |
+   | Of 15 shipped security tools sampled, ones with any menu entry | 2 |
+
+   Two distinct jobs, not one. **Generating** entries: 13 of those 15 tools
+   (metasploit, sqlmap, nmap, radare2, john, hashcat, hydra, aircrack-ng,
+   bettercap, nikto, binwalk …) ship no `.desktop` file at all, so on the
+   desktop they are invisible — you must already know they exist and open a
+   terminal. **Remapping** entries: BlackArch packages that do ship one use
+   non-standard `X-BlackArch-*` categories (`burpsuite` declares
+   `X-BlackArch-Fuzzer;X-BlackArch-Proxy;X-BlackArch-Scanner;X-BlackArch-Webapp`),
+   which Plasma does not recognise, so they land in **Lost & Found**.
+
+   A useful target is the `X-BlackArch-*` → Plasma menu mapping plus synthesised
+   entries that launch CLI tools in a terminal. Note the ISO now themes Plasma
+   with MacTahoe icons, so generated entries should reference icon names that
+   theme actually provides, or they will show a generic fallback.
 3. **Data analysis** — the reason the agent is in the OS at all: making sense
    of scan and capture output in place.
 4. **`blackarch_compat` against a real Docker daemon** — currently
