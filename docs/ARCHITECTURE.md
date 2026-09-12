@@ -148,6 +148,37 @@ user. That is why the profile also ships `sudoers.d` and a polkit rule granting
 `/etc/xdg/kscreenlockerrc`. All three are live-medium only — Calamares writes
 the installed system's own policy, and none of this reaches it.
 
+## Desktop look
+
+The live session ships a macOS-like desktop: [MacTahoe](https://github.com/vinceliuice/MacTahoe-kde)
+aurorae window decorations with traffic-light buttons on the left, matching
+colour schemes, Plasma desktop theme, SDDM greeter theme, Kvantum widget
+style, and the MacTahoe icon/cursor themes. Both light and dark variants
+install; the session defaults to dark and either can be selected in System
+Settings, which is why both are packaged rather than just one.
+
+Two deliberate departures from upstream:
+
+- **No dock.** The look-and-feel package ships
+  `layouts/org.kde.plasma.desktop-layout.js`, a macOS layout with a top bar
+  and a dock. It is not installed. Chymaera keeps Plasma's stock bottom
+  panel, so the theme is applied as individual settings (colour scheme,
+  decoration, desktop theme) rather than by setting `LookAndFeelPackage`,
+  which could pull the layout in with it.
+- **Button order is `XIA`, not upstream's `XAI`.** Upstream's look-and-feel
+  `defaults` and its own aurorae rc disagree with each other; `XIA` is
+  close/minimize/maximize, which is what macOS actually does and what the
+  decoration's `LeftButtons` says.
+
+The theme is vendored as two PKGBUILDs pinned to upstream commits, split so
+the 84 MB icon set can be dropped independently if the ISO needs to slim
+down -- everything else still works, just with Breeze icons.
+
+Defaults reach the live user through `airootfs/home/live/.config/`, chowned
+recursively by a `file_permissions` entry whose path ends in `/` (mkarchiso
+only recurses for those). The uid is hardcoded to 1000 to match the pin in
+`sysusers.d/live.conf`, because the account does not exist at build time.
+
 ## Package flow for Sarina
 
 ```
@@ -214,7 +245,14 @@ command, a systemd timer, a Plasma applet, etc. — TBD).
 - Calamares branding/module config (`settings.yml`, `branding.desc`, a
   `chymaera-calamares-config` package) — currently ships with generic
   upstream defaults.
-- Chymaera branding for SDDM/Plasma, and a Calamares branding module.
+- Chymaera's own identity on top of the MacTahoe base: logo, a Chymaera
+  wallpaper, and a Calamares branding module. The desktop currently looks
+  like macOS, not like Chymaera.
+- The desktop wallpaper is still Plasma's default. Setting it means writing
+  `plasma-org.kde.plasma.desktop-appletsrc`, which also encodes the panel
+  layout -- hand-writing a partial one risks shipping a session with no
+  taskbar. The safe route is to configure it once in a booted VM and copy the
+  resulting file into `airootfs`.
 - Branding: ISO/desktop theming, wallpaper, SDDM theme, Plasma look-and-feel
   package — none of this exists yet.
 - Concrete shape of Sarina's on-system maintenance role (see above) — CLI

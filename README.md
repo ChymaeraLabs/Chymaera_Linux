@@ -8,7 +8,8 @@ penetration testing, combining:
   a repo but not bulk-installed: the ISO ships a small offline-usable core and
   Sarina installs the rest on demand
 - **[KDE Plasma](https://github.com/kde/plasma-desktop)** as the primary desktop
-  environment
+  environment, themed macOS-like (MacTahoe, light and dark) with a
+  conventional bottom taskbar rather than a dock
 - **[Sarina](https://github.com/chymaera3301/Sarina)**, an AI agent integrated
   directly into the OS — for choosing and organising tooling, and for making
   sense of scan and capture output in place

@@ -167,6 +167,16 @@ wireplumber
 # branding/module config yet — see docs/ARCHITECTURE.md.
 calamares
 
+# --- desktop theming (macOS-like look) ---
+# Built locally into [chymaera] from packages/pkgbuilds/, same as calamares.
+# Both light and dark variants install; the live session defaults to dark and
+# either can be picked in System Settings > Global Theme.
+mactahoe-kde-theme
+mactahoe-icon-theme
+# Qt widget style the theme targets. Without it Plasma falls back to Breeze
+# widgets inside MacTahoe window frames, which looks half-applied.
+kvantum
+
 # --- security tooling (hand-picked core) ---
 # Chymaera ships a small, offline-usable core rather than baking in the
 # blackarch-* category groups. Those groups pulled in several thousand

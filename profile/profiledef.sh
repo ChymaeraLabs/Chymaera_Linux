@@ -27,4 +27,8 @@ file_permissions=(
   # sudo silently ignores any sudoers.d file that is group/world writable or
   # not owned by root, so this mode is load-bearing, not hygiene.
   ["/etc/sudoers.d/00-live-nopasswd"]="0:0:440"
+  # Trailing slash matters: mkarchiso only recurses (chown -fhR) when the path
+  # ends in one. 1000:1000 is numeric because the live user does not exist at
+  # build time -- sysusers.d/live.conf creates it at boot, pinned to uid 1000.
+  ["/home/live/"]="1000:1000:700"
 )
