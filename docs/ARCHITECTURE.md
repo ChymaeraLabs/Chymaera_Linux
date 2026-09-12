@@ -116,6 +116,38 @@ file-manifest mismatches). What it doesn't: runtime conflicts between tools
 built ISO — for that, a local [archiso](https://github.com/archlinux/archiso)
 checkout's `scripts/run_archiso.sh` boots a built ISO in QEMU.
 
+## Live session
+
+The live medium autologins a passwordless `live` user straight into Plasma
+(Wayland). Getting there took three things that are each easy to get wrong:
+
+**The user is created by `sysusers.d`, not by shipping `/etc/passwd`.**
+archiso's releng profile ships a two-line `airootfs/etc/passwd` containing only
+root, and that is safe *for releng* because nothing in its package set needs a
+service account. It is not safe here. mkarchiso copies `airootfs/` over the
+pacstrapped root and never re-runs `systemd-sysusers`, so a hand-written
+`passwd` silently deletes all 38 accounts the image already has — including
+`sddm` (uid 954), without which the greeter cannot start.
+`airootfs/etc/sysusers.d/live.conf` sidesteps this: `systemd-sysusers.service`
+runs at boot, before `sysinit.target`, and adds the account to the real
+`/etc/passwd`.
+
+**`systemd-firstboot` has to be masked.** mkarchiso deliberately writes
+`/etc/machine-id` as the literal string `uninitialized` so systemd generates a
+fresh id per boot. That also makes `ConditionFirstBoot=yes` true, so
+`systemd-firstboot` runs and interactively asks for timezone, locale, hostname
+and root password before anything graphical starts — on a live ISO, a dead end.
+Shipping a real machine-id does not help, because mkarchiso overwrites it. So
+`airootfs/etc/systemd/system/systemd-firstboot.service` is a symlink to
+`/dev/null`.
+
+**Passwordless means every auth prompt must be removed, not just the login
+one.** The account has no password, so anything that asks for one strands the
+user. That is why the profile also ships `sudoers.d` and a polkit rule granting
+`wheel` unprompted access, and disables Plasma's screen locker via
+`/etc/xdg/kscreenlockerrc`. All three are live-medium only — Calamares writes
+the installed system's own policy, and none of this reaches it.
+
 ## Package flow for Sarina
 
 ```
@@ -182,8 +214,7 @@ command, a systemd timer, a Plasma applet, etc. — TBD).
 - Calamares branding/module config (`settings.yml`, `branding.desc`, a
   `chymaera-calamares-config` package) — currently ships with generic
   upstream defaults.
-- Live-session auth model (autologin vs. SDDM login prompt with a set
-  password) — not yet configured in `profile/airootfs`.
+- Chymaera branding for SDDM/Plasma, and a Calamares branding module.
 - Branding: ISO/desktop theming, wallpaper, SDDM theme, Plasma look-and-feel
   package — none of this exists yet.
 - Concrete shape of Sarina's on-system maintenance role (see above) — CLI

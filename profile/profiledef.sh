@@ -24,4 +24,7 @@ bootstrap_tarball_compression=('zstd' '-c' '-T0' '--auto-threads=logical' '--lon
 file_permissions=(
   ["/etc/shadow"]="0:0:400"
   ["/root"]="0:0:750"
+  # sudo silently ignores any sudoers.d file that is group/world writable or
+  # not owned by root, so this mode is load-bearing, not hygiene.
+  ["/etc/sudoers.d/00-live-nopasswd"]="0:0:440"
 )

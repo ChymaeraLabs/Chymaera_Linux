@@ -77,6 +77,13 @@ so the checked-in file stays portable. Do not "fix" it to a real path.
 they may materialise as plain text files. Check with `git ls-files -s` before
 assuming they're broken, and never commit them as regular files.
 
+**Never ship `profile/airootfs/etc/passwd`, `shadow`, `group` or `gshadow`.**
+Releng does, and copying that pattern looks right — but mkarchiso overlays
+airootfs onto the pacstrapped root without re-running `systemd-sysusers`, so
+those files *replace* rather than merge. You would delete all 38 service
+accounts in the image, `sddm` included, and the greeter would never start. Add
+accounts through `airootfs/etc/sysusers.d/` instead.
+
 **`profile/` is a fork of archiso's `releng` profile**, kept deliberately close
 to upstream. When something is missing, copy it verbatim from
 `/usr/share/archiso/configs/releng/` (or the archiso GitLab) rather than
