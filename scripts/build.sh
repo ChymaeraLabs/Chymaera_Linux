@@ -14,13 +14,19 @@
 # refuses to run as root — so run scripts/build-local-packages.sh as a
 # regular user FIRST to populate repo/x86_64/, then run this script.
 #
-# Output: out/*.iso
+# Output: out/*.iso (or $CHYMAERA_OUT_DIR/*.iso)
+#
+# Env: CHYMAERA_WORK_DIR, CHYMAERA_OUT_DIR override the default work/ and out/
+# locations, for build hosts where those need to sit on a different filesystem.
 
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-work_dir="$repo_root/work"
-out_dir="$repo_root/out"
+# Overridable because a full BlackArch + Plasma pacstrap needs far more room
+# than a GitHub runner's root disk has (~14 GB). CI points these at the
+# runner's larger scratch disk — see .github/workflows/build-iso.yml.
+work_dir="${CHYMAERA_WORK_DIR:-$repo_root/work}"
+out_dir="${CHYMAERA_OUT_DIR:-$repo_root/out}"
 profile_build_dir="$work_dir/profile"
 
 if [[ $EUID -ne 0 ]]; then

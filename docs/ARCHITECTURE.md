@@ -9,11 +9,9 @@
    isn't quietly lost to hand-trimming.
 2. **Security tooling**: [BlackArch](https://github.com/BlackArch/blackarch),
    added as a repo (`[blackarch]` in `profile/pacman.conf`) rather than
-   forked. Installed via `blackarch-*` pacman category groups (e.g.
-   `blackarch-webapp`, `blackarch-scanner`) instead of the `blackarch-full`
-   metapackage — installing all ~2,800 tools at once is BlackArch's own
-   documented way to break a system (conflicting binaries, competing Python
-   environments, duplicate tool names).
+   forked. The ISO bakes in only a small hand-picked core (~27 packages in
+   `profile/packages.x86_64`); everything beyond it is installed after the
+   fact, agent-assisted, by Sarina. See "Tool delivery" below for why.
 3. **Desktop**: [KDE Plasma](https://github.com/kde/plasma-desktop) via the
    `plasma-meta` group + `sddm` + a small set of core apps (Dolphin, Konsole,
    Kate, Ark, Okular), plus NetworkManager/PipeWire for a normal desktop
@@ -29,33 +27,88 @@
    repo vendored as a git submodule at `packages/sarina`, packaged for the
    ISO by `packages/pkgbuilds/sarina-git`.
 
-## Why curated BlackArch categories, not `blackarch-full`
+## Tool delivery: a small baked-in core, then Sarina
 
-Kali ships a curated default tool set (`kali-linux-default`) rather than
-every tool in its repos, precisely to keep the base system usable and
-supportable. Chymaera follows the same idea on top of BlackArch's category
-groups. The category list currently in `profile/packages.x86_64` is a
-**first-pass guess**, not a validated set — see the next section.
+Kali ships a curated default set (`kali-linux-default`) rather than every tool
+in its repos, to keep the base system usable. Chymaera originally copied that
+shape by baking in fifteen `blackarch-*` category groups. **That approach was
+abandoned**; the ISO now ships a small hand-picked core and defers the rest to
+Sarina at install time.
 
-## Validating the tool selection: `blackarch_compat`
+### Why the categories were dropped
 
-The agent submodule ships a purpose-built harness for exactly this problem,
-at `packages/sarina/blackarch_compat/`: it installs one `blackarch-*` category
+The category list was never validated, and when CI first got far enough to try
+it, it failed in three separate ways:
+
+- **Unresolvable dependencies.** `yinjector`, `limelighter` and `thefatrat`
+  need `lib32-*` packages, which forced `[multilib]` on. Enabling it fixed
+  those three and said nothing about the thousands of packages behind them.
+- **Silent provider roulette.** Six virtual dependencies had multiple
+  providers, so pacstrap printed a numbered menu for each — `tessdata` alone
+  offered 128 — and, being non-interactive, took option 1 every time. That is
+  how the ISO nearly shipped with Afrikaans OCR data.
+- **Size.** The resolved set did not fit on a CI runner and would have made a
+  multi-tens-of-GB ISO. It killed the GitHub runner outright, which uploads no
+  log at all when it dies, making the failure invisible.
+
+Behind all three is one problem: nobody had decided what those ~3,000 packages
+were *for*. A category group is a guess about what a user wants, made by
+someone who has never met them.
+
+### What ships on the ISO now
+
+A hand-picked core covering recon, capture, wireless, password attacks, web,
+exploitation, reversing and forensics. Named packages, not groups — the size
+is predictable and the conflict surface is nearly nil. Verified against live
+repos: 837 packages resolved including dependencies, no provider menus, no
+conflicts, ~3.2 GiB compressed.
+
+The core exists for one reason worth stating plainly: **the live session has
+to be useful with no network.** Air-gapped client sites, SCIFs and offline
+forensics are exactly where a live USB earns its keep, and they are the one
+thing a download-on-demand model cannot serve. `blackarch-keyring` ships too,
+so the installed system trusts `[blackarch]` and can expand later.
+
+### What Sarina owns
+
+Everything past the core:
+
+- **Guided install-time selection** — asking what the machine is for and
+  installing accordingly, instead of guessing on the user's behalf.
+- **Categorisation.** BlackArch packages drop bare binaries into `/usr/bin`
+  with no menu entry — the exact problem Kali's curated menus solve. Sarina
+  generates `.desktop` entries and Plasma menu categories as tools are added,
+  so the organisation is maintained rather than hand-written here.
+
+Neither exists yet. Until they do, the core is all the distro ships, and that
+is a deliberate floor rather than a placeholder — see "Open questions".
+
+## Validating additions: `blackarch_compat`
+
+The agent submodule ships a purpose-built harness at
+`packages/sarina/blackarch_compat/`: it installs one `blackarch-*` category
 (or an explicit combination, with `--combo`) at a time inside a disposable
-Docker container and records whether the install goes cleanly — catching
-conflicting packages/dependency resolution failures before any specific
-combination is baked into `profile/packages.x86_64`.
+Docker container and records whether the install goes cleanly.
 
 ```bash
 cd packages/sarina
 python3 -m blackarch_compat.run_tests --all -o report.json --markdown report.md
 ```
 
-As of this writing that harness is unit-tested but **has not been run
-against a real Docker daemon** (see its own README's Status section) — run
-it and sanity-check a few categories by hand before trusting its results,
-and before treating the current `profile/packages.x86_64` BlackArch section
-as anything more than a starting point.
+Its role has shifted with the change above. It is no longer a gate on the ISO
+package list — that list is now small enough to verify directly:
+
+```bash
+# on an Arch host with [blackarch] configured
+mapfile -t PKGS < <(sed '/^[[:blank:]]*#.*/d;s/#.*//;/^[[:blank:]]*$/d' profile/packages.x86_64 | grep -vx -e calamares -e sarina-git)
+pacman -Sp --print-format '%r/%n' "${PKGS[@]}"
+```
+
+Instead it becomes the safety check behind *Sarina's* install-time
+suggestions: before the agent offers a category, it should know that category
+installs cleanly alongside what is already present. As of this writing the
+harness is unit-tested but **has not been run against a real Docker daemon**
+(see its own README's Status section).
 
 What it catches: install-time conflicts (`pacman -S` failures, `pacman -Qk`
 file-manifest mismatches). What it doesn't: runtime conflicts between tools
@@ -119,7 +172,13 @@ command, a systemd timer, a Plasma applet, etc. — TBD).
 
 ## Open questions / not yet decided
 
-- Final BlackArch category list (pending `blackarch_compat` results).
+- Whether the hand-picked core is the right size and shape. It is a floor,
+  chosen for offline usefulness, not a considered curation — revisit once
+  Sarina's install-time selection exists and it is clear what the core has to
+  cover on its own.
+- Sequencing: the lean ISO assumes Sarina will deliver tools post-install, and
+  that capability does not exist yet. Until it does, Chymaera ships less
+  tooling than it did as a concept. That is an accepted, temporary cost.
 - Calamares branding/module config (`settings.yml`, `branding.desc`, a
   `chymaera-calamares-config` package) — currently ships with generic
   upstream defaults.

@@ -167,31 +167,68 @@ wireplumber
 # branding/module config yet — see docs/ARCHITECTURE.md.
 calamares
 
-# --- BlackArch tooling ---
-# blackarch-keyring trusts the [blackarch] repo on the *installed* system,
-# not just the build host (see profile/pacman.conf).
+# --- security tooling (hand-picked core) ---
+# Chymaera ships a small, offline-usable core rather than baking in the
+# blackarch-* category groups. Those groups pulled in several thousand
+# packages, unresolvable lib32-* dependencies, and half a dozen provider
+# menus, and no one had validated the combination (see docs/ARCHITECTURE.md).
 #
-# The category list below is a first-pass, curated selection (not
-# blackarch-full) — it has NOT yet been run through
-# packages/sarina/blackarch_compat, which exists specifically to catch
-# install-time conflicts category-by-category before anything is baked in
-# here. Validate with that tool before treating this list as final; see
-# docs/ARCHITECTURE.md.
+# Everything beyond this core is installed after the fact, agent-assisted, by
+# Sarina -- which also owns categorising newly installed tools into the Plasma
+# menu. The core exists so the live session is still useful with no network:
+# air-gapped client sites and offline forensics are exactly where a live USB
+# matters most, and that is the one thing a download-on-demand model cannot do.
+#
+# releng's base list (above) already covers nmap, tcpdump, testdisk, ddrescue,
+# clonezilla and fsarchiver, so those are deliberately not repeated here.
+
+# blackarch-keyring makes the *installed* system trust [blackarch], so Sarina
+# can install from it later. This is what keeps the lean ISO expandable.
 blackarch-keyring
-blackarch-recon
-blackarch-scanner
-blackarch-webapp
-blackarch-proxy
-blackarch-sniffer
-blackarch-spoof
-blackarch-cracker
-blackarch-forensic
-blackarch-crypto
-blackarch-exploitation
-blackarch-fuzzer
-blackarch-networking
-blackarch-wireless
-blackarch-defensive
+
+# recon / scanning
+masscan
+dnsrecon
+whois
+
+# traffic capture / MITM
+wireshark-qt
+bettercap
+
+# wireless
+aircrack-ng
+reaver
+hcxtools
+
+# password attacks
+john
+hashcat
+hydra
+
+# web application
+sqlmap
+nikto
+gobuster
+ffuf
+wpscan
+burpsuite
+
+# exploitation
+metasploit
+
+# reverse engineering
+radare2
+binwalk
+
+# forensics
+sleuthkit
+foremost
+
+# supporting utilities
+socat
+openbsd-netcat
+proxychains-ng
+responder
 
 # --- Sarina ---
 # sarina-git is built locally from the packages/sarina submodule into the
@@ -199,3 +236,29 @@ blackarch-defensive
 git
 python
 sarina-git
+
+# --- explicit provider choices ---
+# Six virtual deps in the set above have multiple providers, so pacstrap stops
+# and prints a numbered menu for each (tessdata alone lists 128 options). It is
+# non-interactive under mkarchiso, so it silently takes option 1 — which for
+# tessdata means Afrikaans OCR data, and for ttf-font means gnu-free-fonts.
+# Naming the provider we actually want makes the build deterministic and drops
+# several hundred lines of menu noise from the log.
+#
+# NOTE: no trailing comments on these lines. mkarchiso parses this file with
+# `sed '/^[[:blank:]]*#.*/d;s/#.*//;/^[[:blank:]]*$/d'`, which strips a trailing
+# comment but leaves the whitespace before it, producing a package name with
+# trailing spaces that pacman then cannot resolve.
+
+# libxtables.so=12-64 (option 1 would be `iptables`)
+iptables-nft
+# mysql
+mariadb
+# oci-runtime
+crun
+# qt6-multimedia-backend
+qt6-multimedia-ffmpeg
+# tessdata (option 1 is tesseract-data-afr)
+tesseract-data-eng
+# ttf-font (option 1 is gnu-free-fonts)
+noto-fonts

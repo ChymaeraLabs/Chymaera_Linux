@@ -7,3 +7,6 @@ PKGBUILD text eol=lf
 packages.x86_64 text eol=lf
 profiledef.sh text eol=lf
 *.png binary
+*.preset text eol=lf
+*.yml text eol=lf
+linux.preset text eol=lf
