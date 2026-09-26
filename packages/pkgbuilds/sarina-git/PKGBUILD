@@ -56,4 +56,21 @@ package() {
     "$pkgdir/etc/sarina/service.env.example"
   install -Dm644 README.md \
     "$pkgdir/usr/share/doc/$pkgname/README.md"
+
+  # Omarchy's agents panel refreshes by running every omarchy-agent-usage-*
+  # script in $OMARCHY_PATH/bin and writing each script's stdout to
+  # ~/.local/state/omarchy/agents/usage/<agent>.json. This is Sarina's
+  # collector. It is generated here, not taken from the Sarina repo, so it adds
+  # no new path the packaging contract has to track. It depends on the
+  # `fleet-usage` command, which exists only once the submodule pointer is at a
+  # Sarina commit that has it; until then the panel logs a failed collector.
+  install -Dm755 /dev/stdin "$pkgdir/usr/share/omarchy/bin/omarchy-agent-usage-sarina" <<'EOF'
+#!/bin/bash
+
+# omarchy:summary=Print the Sarina usage record as JSON
+# omarchy:args=[--force] [--limits-only]
+# omarchy:hidden=true
+
+exec sarina fleet-usage "$@"
+EOF
 }

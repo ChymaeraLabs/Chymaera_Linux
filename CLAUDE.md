@@ -243,6 +243,12 @@ the capabilities that gap depends on — see `docs/ARCHITECTURE.md`:
    launch or supervise other agents, proposal-first with human approval and
    Chymaera Sentry watching. Omarchy starts agents in auto-approve modes, so an
    unsupervised launcher is a privilege-escalation path. See `docs/DESKTOP.md`.
+   **Built on the Sarina side** as `sarina fleet-usage`, `fleet-status` and
+   `fleet-launch` (Sarina's `docs/ECOSYSTEM.md` §1); this repo ships the panel
+   collector `/usr/share/omarchy/bin/omarchy-agent-usage-sarina` from the
+   `sarina-git` PKGBUILD. It does nothing until the `packages/sarina` pointer
+   reaches a Sarina commit that has those commands, and the panel needs
+   Omarchy's shell, which the image does not ship yet.
 
 ### Advancing the submodule
 

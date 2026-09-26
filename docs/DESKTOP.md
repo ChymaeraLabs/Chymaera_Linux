@@ -249,8 +249,28 @@ three integration points for Sarina, in increasing order of power and risk:
    loop. It should therefore be proposal-first with human approval, and Chymaera
    Sentry, which already watches Sarina, is the natural watcher for it.
 
-Build in that order. Also worth having Sarina load the Omarchy skill, so she can
-tailor the desktop the same way the other agents can.
+Built in that order, on the Sarina side, as `sarina fleet-usage` (1),
+`fleet-status [--suggest]` (2) and `fleet-launch` (3):
+
+- **Verified end to end** in the WSL Arch host: Omarchy's own
+  `omarchy-agent-usage-update` (v4.0.4, unmodified) ran the collector wrapper and
+  wrote a correct `sarina.json`, and `fleet-status` then read it alongside a
+  Claude-shaped record and computed headroom. 55 new offline tests.
+- **Not verified:** that the panel *draws* Sarina's tab. The record matches the
+  fields the panel's QML reads, but that was read from source. It needs the real
+  shell, which the image does not ship yet.
+- **The launcher is deliberately different from Omarchy's.** It has no way to add
+  an auto-approve flag, needs a human `y` (or `--yes`), refuses a prompt that
+  changed after the proposal, and audits every attempt to
+  `~/.local/state/sarina/agent-launch.jsonl` for Sentry (prompt stored as a hash
+  and a 60-character preview). It is a CLI command only, **not a tool the model
+  can call**, and a test enforces that.
+- **Other agents' records are untrusted input.** Control and bidi characters are
+  stripped, text truncated, ids and numbers validated.
+- `crush` and `openclaw` are not launchable, for stated reasons.
+
+Still worth doing: have Sarina load the Omarchy skill, so she can tailor the
+desktop the same way the other agents can.
 
 ### Proton VPN
 
