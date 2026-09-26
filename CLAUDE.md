@@ -237,6 +237,12 @@ the capabilities that gap depends on — see `docs/ARCHITECTURE.md`:
    switch must live in nftables or NetworkManager, *not* in Sarina, so a crashed
    or injected agent cannot leave the VPN open. Network-config changes are
    proposals only.
+7. **Agent manager** — feed and read Omarchy's agents panel: write
+   `~/.local/state/omarchy/agents/usage/sarina.json` (any file there gets a tab),
+   read the other agents' records for a unified usage view, and only later
+   launch or supervise other agents, proposal-first with human approval and
+   Chymaera Sentry watching. Omarchy starts agents in auto-approve modes, so an
+   unsupervised launcher is a privilege-escalation path. See `docs/DESKTOP.md`.
 
 ### Advancing the submodule
 

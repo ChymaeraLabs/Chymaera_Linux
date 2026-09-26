@@ -13,10 +13,11 @@ what we did not, and what is not verified yet.
 | Hyprland session installable and selectable at the SDDM greeter | Built, **not boot-tested** |
 | Two looks + `chymaera-desktop-mode` toggle | Built; script unit-tested with stubs, **never run inside Hyprland** |
 | Hyprland as the autologin default | **Not done** — Plasma still autologins |
-| Omarchy's Quickshell shell (real bar, menu, lock, notifications) | Not adopted; Waybar approximation instead |
-| Omarchy theme system (`colors.toml` + templates) | Not built |
+| Omarchy's Quickshell shell (real bar, menu, lock, notifications, screensaver) | **Wanted, not adopted**; Waybar stand-in for now. Route chosen, see "Adopting Omarchy's Quickshell shell" |
+| Omarchy theme system (`colors.toml` + templates) | Comes with the shell above |
 | MacTahoe GTK theme | Not packaged (icons, cursor, Kvantum are) |
 | Proton VPN, Sarina crash diagnosis | Contracts only; see below |
+| Tailscale / Headscale | Optional, off by default; see below |
 
 Nothing here has run on a real machine: the build host is Windows. Static
 checks that *were* done: the package list resolves against live Arch repos
@@ -44,8 +45,11 @@ Read from the repo at tag `v4.0.4`; the latest at the time of writing.
 - **The `[omarchy]` pacman repo:** `https://pkgs.omarchy.org/stable/$arch`,
   `SigLevel = Required DatabaseOptional`, signing key
   `40DFB630FF42BCFFB047046CF0134EE680CAC571`. Channels: `stable`, `rc`, `edge`.
-  Its package list is not published anywhere I could read (the directory
-  listing 404s); the names are inferred from `install/omarchy-base.packages`.
+  248 packages, read from the repo database: the `omarchy` and
+  `omarchy-settings` packages, `quickshell-git`, `ttfx`, `walker` and the
+  `elephant-*` backend, `owe`, `hyprshade`, `wayfreeze`, `umu-launcher`,
+  `heroic-games-launcher-bin`, `sunshine`, `nordvpn-bin`, several agent CLIs
+  and Omarchy's own kernels (`linux-omarchy*`), plus many apps. No Proton VPN.
 - **Theming:** a theme is a `colors.toml` plus templates in `default/themed/`
   rendered into each app's config by `omarchy-theme-set`.
 - **Toggles:** a toggle copies a small Lua file into
@@ -86,15 +90,76 @@ icon font is guaranteed to be present. Windows already open at the moment of the
 switch may keep their old float/tile state. There is no lock screen: the live
 account has no password, so a lock screen would have nothing to unlock with.
 
-### Why Waybar and not Omarchy's Quickshell shell
+### Adopting Omarchy's Quickshell shell (the real target)
 
-Because the shell is the part that makes Omarchy feel like Omarchy, this is a
-deliberate downgrade and a stopgap. Vendoring `shell/` means pinning Omarchy's
-`bin/` helper scripts too — its AGENTS.md states that commands installed by the
-default package set are runtime invariants and are called without presence
-checks — and none of that has been evaluated against a Chymaera image. The
-sensible order is: boot-test this, then decide whether to vendor the Quickshell
-shell as a pinned package (like the MacTahoe PKGBUILDs), not before.
+Waybar is a stopgap. What makes Omarchy feel like Omarchy — the bar, menu,
+notifications, lock screen, screensaver and the theme system — is its Quickshell
+shell, and that is what we want. Third-party lock screens such as
+[omarchy-lock-explorer](https://github.com/SirJul1337/omarchy-lock-explorer)
+(MIT, 60+ designs) are also Omarchy-4 shell plugins: they replace the built-in
+`omarchy.lock` service and are driven by `omarchy-shell lock ...`, so they need
+the real shell, not a look-alike.
+
+Measured against the v4.0.4 source and the live `[omarchy]` repo database:
+
+- **The shell calls 98 distinct `omarchy-*` helper commands; 77 are scripts in
+  the `omarchy` package's `bin/`.** So adopting the shell means adopting that
+  `bin/`, not just `shell/*.qml`.
+- **`omarchy` (4.0.4-1, 121 MB installed, 442 binaries) has no install
+  scriptlet** (checked in the package): it is inert files. Its hard dependencies
+  are `omarchy-keyring`, `omarchy-settings=4.0.4` (an *exact* version),
+  `hyprland`, `quickshell`, `uwsm`, `sddm`, `xdg-desktop-portal-hyprland`,
+  `wireplumber`, `pipewire`, `gnome-keyring`, `gum`, `jq`, `git`, `perl`,
+  `fakeroot`, `pacman-contrib`, a Nerd font, and **`limine`,
+  `limine-mkinitcpio-hook`, `limine-snapper-sync` and `snapper`**.
+- **`omarchy-settings` (4.0.4-1) is the dangerous one, and it does have an
+  install scriptlet.** On *every install and every upgrade* it overwrites
+  `/etc/os-release`, `/etc/nsswitch.conf`, `/etc/security/faillock.conf`,
+  `/etc/plymouth/plymouthd.conf` and `/etc/skel/.bashrc` (its own comments call
+  this "intentionally destructive"). Installed as-is, each `pacman -Syu` would
+  reset Chymaera's identity to Omarchy's. It also ships `/etc` drop-ins for
+  mkinitcpio hooks, SDDM, sudoers, sysctl and logind, plus `limine-entry-tool`
+  and snapper templates. A stray mkinitcpio hook is how an ISO builds fine and
+  then panics at boot (see CLAUDE.md), and its SDDM config would fight our
+  autologin.
+- **`ttfx`** (0.3.2-1), which the screensaver and several lock designs need, is
+  only in `[omarchy]`. The Omarchy `quickshell-git` build (0.3.0.r20) is also
+  there; Arch `extra` has `quickshell` 0.3.1. Whether the shell needs the git
+  build is unknown until it is run.
+- The screensaver needs `ttfx` plus one of Alacritty, Foot, Ghostty or Kitty;
+  we ship Foot.
+
+**Route (revised): consume Omarchy's real packages, and replace only
+`omarchy-settings`.** An earlier draft of this document recommended vendoring
+`omarchy` from source. That forfeits Omarchy's updates: 442 scripts and a
+migration system would drift from a frozen copy, and the trust in their public
+research and releases is the reason to follow them. Arch has a standard tool
+for this: a package that `provides=('omarchy-settings=X.Y.Z')` satisfies the
+dependency in place of the real one. So:
+
+- Install the real `omarchy`, `omarchy-keyring`, `ttfx`, `quickshell-git` etc.
+  from `[omarchy]`.
+- Ship `chymaera-settings`, which provides `omarchy-settings=<same version>`.
+  It is built *from the real `omarchy-settings` tarball at that version*, keeping
+  the parts Omarchy's scripts expect (the `/etc/skel` config seeds, `/usr/share/omarchy`
+  defaults, user units) and dropping the install scriptlet, the identity
+  overwrites, the mkinitcpio, SDDM, Limine and snapper files.
+- Because the dependency is an exact version, `chymaera-settings` must be
+  re-cut on every Omarchy release. That is mechanical and a good job for CI, or
+  for Sarina proposing the bump (see "Sarina contracts").
+- Limine and Snapper still install (hard dependencies) but stay unconfigured.
+  Shadowing them with empty providers is possible if their size matters.
+
+**Untested.** Nothing here has been installed on an image yet. The open
+questions a build must answer: whether `omarchy`'s scripts run without the
+files we drop, whether `quickshell` from `extra` is enough, and whether the
+`provides` shim resolves cleanly in pacstrap.
+
+This needs `[omarchy]` in the image's `pacman.conf`, so the baked-in set depends
+on Omarchy's signing key at *build* time. **Decided by the maintainer:
+trusted**, on the grounds that Omarchy's research, findings and updates are
+fully public. The key fingerprint is still verified rather than assumed; see
+"The `[omarchy]` repo".
 
 ### Phasing
 
@@ -107,8 +172,10 @@ shell as a pinned package (like the MacTahoe PKGBUILDs), not before.
    `Session=hyprland-uwsm`. `hyprland` ships `hyprland-uwsm.desktop` (checked
    against Arch's file list for the package). The live-session accommodations —
    passwordless sudo, polkit rule, no lock screen — already cover it.
-4. **Decide on the Quickshell shell and the theme system** (`colors.toml` +
-   templates, ported to Waybar/GTK/Kvantum).
+4. **Adopt Omarchy's Quickshell shell** by vendoring `omarchy` from the pinned
+   tag (see above). That brings its theme system, screensaver and plugin
+   support, and makes third-party lock screens installable. Waybar and the dock
+   remain only for the stealth look until the shell has a stealth layout.
 5. **Package the MacTahoe GTK theme** so stealth mode covers GTK apps, not just
    icons and Kvantum.
 
@@ -116,18 +183,18 @@ shell as a pinned package (like the MacTahoe PKGBUILDs), not before.
 
 It is **not** enabled on the ISO or in the installed system yet. It is a
 third-party repository whose signing key can push root-installed packages onto a
-security distro, the same kind of trust decision as `[blackarch]`, made
-separately. When enabled, it should be:
+security distro, the same kind of trust decision as `[blackarch]`. The
+maintainer has decided to trust it. When enabled, it should be:
 
-- opt-in, added by Sarina on request, never baked into the live image;
+- present in the image's `pacman.conf` (it supplies the shell and `ttfx`);
 - pinned to the `stable` channel (`https://pkgs.omarchy.org/stable/$arch`); an
   older `https://pkgs.omarchy.org/$arch` path serves only `omarchy-keyring`,
   which is a documented pitfall;
 - fetched with the key fingerprint verified against
   `40DFB630FF42BCFFB047046CF0134EE680CAC571` before `pacman-key --lsign-key`.
 
-The packages worth pulling from it are the apps and utilities in Omarchy's
-package list, not `omarchy` or `omarchy-settings` (see above).
+Do not install `omarchy-settings` or the `linux-omarchy*` kernels from it; see
+above. Apps and utilities are fine.
 
 ## Sarina contracts
 
@@ -142,6 +209,36 @@ skill that says how to investigate. In Chymaera the agent is Sarina. For games
 the useful evidence is the coredump, the Proton/Wine log, `journalctl`, GPU
 driver state, and the launch options. Sarina should propose fixes, not apply
 them unattended.
+
+### Sarina as manager of all agents
+
+Omarchy does not bundle a model or an agent of its own. It ships launchers for
+about thirteen third-party agent CLIs (Claude Code, Codex, OpenCode, Hermes,
+Crush, Cursor CLI and others), one **agents panel** in the bar, the crash
+hand-off described above, and an "Omarchy skill" that teaches whichever agent is
+running how to tailor the system (symlinked into `~/.claude/skills`,
+`~/.codex/skills` and similar). It recommends LM Studio or Ollama for local
+models.
+
+The panel is a pure display over JSON files. Each agent has one record in
+`~/.local/state/omarchy/agents/usage/<agent>.json` (`id`, `name`, `updatedAt`,
+limits, per-day and per-model token stats), and *anything* that writes such a
+file gets a tab; a collector is just a script printing that record. That makes
+three integration points for Sarina, in increasing order of power and risk:
+
+1. **Sarina appears in the panel.** She writes her own `sarina.json`. No
+   Omarchy code changes, nothing to patch on update.
+2. **Sarina reads every agent's record**, which Omarchy has already normalised
+   across Claude, Codex and the rest. She gets a single view of limits and spend
+   for free, and can warn or route work to whichever agent has headroom.
+3. **Sarina launches and supervises other agents.** This is the "manager"
+   role, and the risky one: Omarchy starts agents in their auto-approve modes,
+   so an agent launched by a prompt-injected Sarina runs with no human in the
+   loop. It should therefore be proposal-first with human approval, and Chymaera
+   Sentry, which already watches Sarina, is the natural watcher for it.
+
+Build in that order. Also worth having Sarina load the Omarchy skill, so she can
+tailor the desktop the same way the other agents can.
 
 ### Proton VPN
 
@@ -164,9 +261,13 @@ keyring (gnome-keyring or kwallet).
   version delta after `pacman -Syu` and flagging what changed for the VPN
   (NetworkManager connection names, kill-switch behaviour). Known past breakage:
   Arch forum reports of connection errors after specific app versions.
-- **Tailscale and Headscale are a different tool.** They build a private mesh
-  between *your own* devices over WireGuard; they do not route traffic out
-  through Proton. Useful for connecting a Chymaera box to a team or a Flipper
-  rig, but separate from this.
+- **Tailscale and Headscale are a different tool, kept as an option.** They
+  build a private mesh between *your own* devices over WireGuard; they do not
+  route traffic out through Proton. Useful for connecting a Chymaera box to a
+  team or a Flipper rig. Both are in Arch `extra` (`tailscale` 1.102.4,
+  `headscale` 0.29.4), so there is nothing to package. Tailscale's coordination
+  server is a hosted service; Headscale is the self-hosted replacement for it,
+  which is where the cost trade-off you mentioned lives. Neither is installed
+  or enabled; Sarina installs them on request.
 - **A VPN that hides the source address can conflict with scoped engagements**
   and client allow-lists, so it should be a toggle, not always on.
