@@ -10,8 +10,8 @@ what we did not, and what is not verified yet.
 
 | Piece | State |
 | --- | --- |
-| Hyprland session installable and selectable at the SDDM greeter | Built, **not boot-tested** |
-| Two looks + `chymaera-desktop-mode` toggle | Built; script unit-tested with stubs, **never run inside Hyprland** |
+| Hyprland session installable and selectable at the SDDM greeter | Built and **boot-tested in QEMU/KVM** (2026-09-26): starts, bar loads, `SUPER + RETURN` opens a terminal |
+| Two looks + `chymaera-desktop-mode` toggle | **Verified in QEMU**: `SUPER + F12` flips both ways; after four toggles there is still one bar and one dock. Two bugs found and fixed (below) |
 | Hyprland as the autologin default | **Not done** — Plasma still autologins |
 | Omarchy's Quickshell shell (real bar, menu, lock, notifications, screensaver) | **Wanted, not adopted**; Waybar stand-in for now. Route chosen, see "Adopting Omarchy's Quickshell shell" |
 | Omarchy theme system (`colors.toml` + templates) | Comes with the shell above |
@@ -19,12 +19,23 @@ what we did not, and what is not verified yet.
 | Proton VPN, Sarina crash diagnosis | Contracts only; see below |
 | Tailscale / Headscale | Optional, off by default; see below |
 
-Nothing here has run on a real machine: the build host is Windows. Static
-checks that *were* done: the package list resolves against live Arch repos
-(197 requested, no provider menus, no conflicts), every Lua file parses under
-`luac`, both Waybar configs parse as JSON, and `chymaera-desktop-mode` passes
-`bash -n` and a stubbed functional test (toggle both ways, no duplicated GTK
-keys, garbage state file falls back to the default look).
+Testing so far is QEMU/KVM with software rendering, driven by keystrokes over
+QMP and read back as screenshots. **Not yet tried on real GPU hardware**, and
+the ISO build has only been run in WSL, not in CI.
+
+Static checks: the package list resolves against live Arch repos (197
+requested, no provider menus, no conflicts), every Lua file parses under `luac`,
+both Waybar configs parse as JSON, and `chymaera-desktop-mode` passes `bash -n`.
+
+**What the boot test caught that the static checks and a stubbed script test
+did not** (all fixed):
+
+- Waybar formats time with `fmt`, which rejects GNU flags like `%-d` and `%-I`;
+  the clock module silently vanished from the stealth bar.
+- `pkill -x nwg-dock-hyprland` never matches: the kernel truncates process
+  names to 15 characters and the name is 18. The old dock was never killed.
+- `nwg-dock-hyprland -s` takes a filename *relative to its config directory*;
+  passing an absolute path made it fatal at startup, so there was no dock.
 
 ## What Omarchy is (as of v4.0.4)
 
@@ -87,7 +98,8 @@ fix for windows that were already open when the look changed.
 **Known limits.** Stealth is an imitation of macOS, not Plasma; someone who
 clicks around will notice. The bar uses text labels (`wifi`, `vol`) because no
 icon font is guaranteed to be present. Windows already open at the moment of the
-switch may keep their old float/tile state. There is no lock screen: the live
+switch keep their old float/tile state (observed: a window floated in stealth
+stays floating after switching back). There is no lock screen: the live
 account has no password, so a lock screen would have nothing to unlock with.
 
 ### Adopting Omarchy's Quickshell shell (the real target)

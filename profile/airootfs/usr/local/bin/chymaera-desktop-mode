@@ -70,15 +70,20 @@ apply_theme() {
 apply_shell() {
   local mode=$1
 
+  # The dock's name is 18 characters, and the kernel truncates process names to
+  # 15, so `pkill -x nwg-dock-hyprland` matches nothing and leaves the old dock
+  # running. Match the command line instead.
   pkill -x waybar
-  pkill -x nwg-dock-hyprland
+  pkill -f '^nwg-dock-hyprland'
   sleep 0.3
 
   setsid -f waybar -c "$CONFIG/waybar/$mode/config.jsonc" -s "$CONFIG/waybar/$mode/style.css" >/dev/null 2>&1
 
   if [[ $mode == "stealth" ]]; then
-    setsid -f nwg-dock-hyprland -i 44 -mb 8 -w 5 -c fuzzel \
-      -s "$CONFIG/nwg-dock-hyprland/style.css" >/dev/null 2>&1
+    # No -s: the dock resolves its stylesheet relative to
+    # ~/.config/nwg-dock-hyprland/ and defaults to style.css there. An absolute
+    # path gets prefixed with that directory and fails to load.
+    setsid -f nwg-dock-hyprland -i 44 -mb 8 -w 5 -c fuzzel >/dev/null 2>&1
   fi
 }
 

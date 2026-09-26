@@ -7,9 +7,14 @@ penetration testing, combining:
 - **[BlackArch](https://github.com/BlackArch/blackarch)** tooling, available as
   a repo but not bulk-installed: the ISO ships a small offline-usable core and
   Sarina installs the rest on demand
-- **[KDE Plasma](https://github.com/kde/plasma-desktop)** as the primary desktop
-  environment, themed macOS-like (MacTahoe, light and dark) with a
-  conventional bottom taskbar rather than a dock
+- **[Omarchy](https://github.com/omacom/omarchy)** as the model for the
+  desktop: a keyboard-driven Hyprland session with Omarchy's keybindings, plus
+  a second "stealth" look that imitates a macOS desktop, switched in place with
+  `SUPER + F12`. Omarchy is an upstream we follow, not a fork: see
+  [Built on Omarchy](#built-on-omarchy)
+- **[KDE Plasma](https://github.com/kde/plasma-desktop)** as the current default
+  session and the fallback one, themed macOS-like (MacTahoe, light and dark)
+  with a conventional bottom taskbar rather than a dock
 - **[Sarina](https://github.com/chymaera3301/Sarina)**, an AI agent integrated
   directly into the OS — for choosing and organising tooling, and for making
   sense of scan and capture output in place
@@ -49,6 +54,35 @@ installing accordingly, and generating the `.desktop` entries and Plasma menu
 categories that BlackArch packages don't ship. Those capabilities are still
 being built.
 
+## Built on Omarchy
+
+[Omarchy](https://github.com/omacom/omarchy) (MIT, by David Heinemeier Hansson)
+is the reference for Chymaera's desktop, and where its packages fit they are
+consumed as-is rather than copied, so its updates keep flowing. What is in the
+tree today:
+
+- A Hyprland session, installed beside Plasma and selectable at the login
+  screen, using Omarchy's window and workspace keybindings verbatim
+  ([THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) has the attribution and
+  licence).
+- Two looks in one session, toggled with `SUPER + F12` and no logout: the
+  default tiling look, and a floating, rounded macOS-style "stealth" look with a
+  menu bar and dock. Boot-tested in a VM.
+
+Planned, not built: Omarchy's Quickshell shell, which brings its screensaver,
+theme system and third-party lock screens, and Omarchy's agents panel showing
+Sarina's usage beside Claude Code and the other agents. Chymaera keeps its own
+live ISO, installer, system identity and boot configuration rather than taking
+Omarchy's `omarchy-settings` package, which overwrites `/etc/os-release` on
+every upgrade.
+
+Chymaera does not use an AUR helper. AUR-only software we need (Calamares) is
+vendored as a PKGBUILD and built into Chymaera's own repo. Omarchy installs AUR
+packages with `yay`; whether Chymaera adopts that is undecided.
+
+The design, measurements and everything still unverified are in
+[docs/DESKTOP.md](docs/DESKTOP.md).
+
 ## Repository layout
 
 ```
@@ -64,7 +98,7 @@ Chymaera_Linux/
 │       ├── sarina-git/        # PKGBUILD building packages/sarina locally
 │       └── calamares/         # vendored AUR PKGBUILD (graphical installer)
 ├── repo/                     # local pacman repo built from pkgbuilds (gitignored contents)
-├── docs/                     # Architecture notes and design decisions
+├── docs/                     # Architecture (ARCHITECTURE.md) and desktop design (DESKTOP.md)
 ├── scripts/                  # Build/dev helper scripts
 ├── CLAUDE.md                 # Guidance for AI agents working in this repo
 └── .github/workflows/        # CI: build (and eventually publish) the ISO
@@ -164,6 +198,8 @@ To pull in the latest Sarina code:
   desktop environment (installed via the `plasma-meta` group).
 - [Sarina](https://github.com/chymaera3301/Sarina) — the AI agent
   integrated into the OS (private repo, submodule at `packages/sarina`).
+- [Omarchy](https://github.com/omacom/omarchy) — the Hyprland desktop this
+  project's session, keybindings and look-switching are modelled on (MIT).
 
 ## License
 

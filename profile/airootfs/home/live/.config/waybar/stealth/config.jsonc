@@ -14,7 +14,9 @@
     "max-length": 40
   },
   "clock": {
-    "format": "{:%a %b %-d  %-I:%M %p}"
+    // No GNU dash flags (%-d, %-I): Waybar formats with fmt, which rejects them,
+    // and the module silently disappears from the bar.
+    "format": "{:%a %b %d  %I:%M %p}"
   },
   "network": {
     "format-wifi": "wifi",
