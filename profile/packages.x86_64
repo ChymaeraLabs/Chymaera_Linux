@@ -159,6 +159,34 @@ pipewire-pulse
 pipewire-jack
 wireplumber
 
+# --- Hyprland session (second desktop, selectable at the SDDM greeter) ---
+# Plasma stays the autologin session until this one has been boot-tested; see
+# docs/DESKTOP.md for the phasing and the one-line switch. Keybindings and the
+# two-look design come from Omarchy. All of these are in [extra]; resolved
+# against live repos with no provider menus.
+hyprland
+uwsm
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+hyprpolkitagent
+waybar
+nwg-dock-hyprland
+mako
+fuzzel
+foot
+grim
+slurp
+wl-clipboard
+cliphist
+brightnessctl
+playerctl
+
+# --- VPN ---
+# WireGuard userspace tools, for Proton VPN WireGuard configs and NetworkManager's
+# wg support. The Proton app itself is deliberately not baked in: it needs an
+# account and is installed on demand (docs/DESKTOP.md, "Proton VPN").
+wireguard-tools
+
 # --- graphical installer ---
 # calamares is AUR-only (not in core/extra/multilib) — built locally from
 # packages/pkgbuilds/calamares into the [chymaera] repo, same as sarina-git.

@@ -150,6 +150,12 @@ the installed system's own policy, and none of this reaches it.
 
 ## Desktop look
 
+> **Direction change.** The primary desktop is moving from Plasma to an
+> Omarchy-derived Hyprland session with a switchable macOS-style "stealth" look;
+> Plasma stays as a fallback session. Design, status and what is unverified are
+> in [DESKTOP.md](DESKTOP.md). Until Hyprland is boot-tested and made the
+> autologin default, the description below is still what the live session ships.
+
 The live session ships a macOS-like desktop: [MacTahoe](https://github.com/vinceliuice/MacTahoe-kde)
 aurorae window decorations with traffic-light buttons on the left, matching
 colour schemes, Plasma desktop theme, SDDM greeter theme, Kvantum widget

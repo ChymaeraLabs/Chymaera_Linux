@@ -227,6 +227,16 @@ the capabilities that gap depends on — see `docs/ARCHITECTURE.md`:
 4. **`blackarch_compat` against a real Docker daemon** — currently
    unit-tested only. It is the safety check behind (1); until it has actually
    run, treat any category the agent proposes as unvalidated.
+5. **Crash diagnosis** — a `systemd-coredump` watcher that raises a "Process
+   crashed" notification and hands the PID, binary and signal to Sarina with a
+   skill describing how to investigate (coredump, Proton/Wine log, `journalctl`,
+   GPU driver state). Copies Omarchy's `omarchy-crash-watch` /
+   `omarchy-agent-crash`; see `docs/DESKTOP.md`. Sarina proposes, a human applies.
+6. **Proton VPN lifecycle** — install `proton-vpn-gtk-app` (Arch `extra`) on
+   request, and after `pacman -Syu` report what changed for the VPN. The kill
+   switch must live in nftables or NetworkManager, *not* in Sarina, so a crashed
+   or injected agent cannot leave the VPN open. Network-config changes are
+   proposals only.
 
 ### Advancing the submodule
 
