@@ -16,6 +16,7 @@ what we did not, and what is not verified yet.
 | Omarchy's Quickshell shell (real bar, menu, lock, notifications, screensaver) | **Wanted, not adopted**; Waybar stand-in for now. Route chosen, see "Adopting Omarchy's Quickshell shell" |
 | Omarchy theme system (`colors.toml` + templates) | Comes with the shell above |
 | MacTahoe GTK theme | Not packaged (icons, cursor, Kvantum are) |
+| Installed system gets the desktop config | Written (`chymaera-install-cleanup` copies the live user's `.config` into `/etc/skel`); **never run**, see [INSTALLER.md](INSTALLER.md) |
 | Proton VPN, Sarina crash diagnosis | Contracts only; see below |
 | Tailscale / Headscale | Optional, off by default; see below |
 
@@ -184,12 +185,27 @@ fully public. The key fingerprint is still verified rather than assumed; see
    `Session=hyprland-uwsm`. `hyprland` ships `hyprland-uwsm.desktop` (checked
    against Arch's file list for the package). The live-session accommodations —
    passwordless sudo, polkit rule, no lock screen — already cover it.
-4. **Adopt Omarchy's Quickshell shell** by vendoring `omarchy` from the pinned
-   tag (see above). That brings its theme system, screensaver and plugin
-   support, and makes third-party lock screens installable. Waybar and the dock
-   remain only for the stealth look until the shell has a stealth layout.
+4. **Adopt Omarchy's Quickshell shell** by installing the real `omarchy`
+   package from `[omarchy]` and shimming `omarchy-settings` with
+   `chymaera-settings` (see "Route (revised)" above; the earlier plan to vendor
+   from source was dropped). That brings its theme system, screensaver and
+   plugin support, and makes third-party lock screens installable. Waybar and
+   the dock remain only for the stealth look until the shell has a stealth
+   layout.
 5. **Package the MacTahoe GTK theme** so stealth mode covers GTK apps, not just
    icons and Kvantum.
+
+### Omarchy's installer and Windows trial image
+
+Omarchy's own install flow was read as a reference for Chymaera's installer and
+is **not** adopted: it is tied to Omarchy's bootloader, snapshot and package
+layout, and Omarchy's repo does not contain the base-system install that makes
+it quick. What was read, and what Chymaera borrowed or might, is in
+[INSTALLER.md](INSTALLER.md#what-we-took-from-omarchy). Separately,
+[`try-omarchy-windows`](https://github.com/omacom/try-omarchy-windows) (MIT)
+boots a prebuilt Omarchy image in QEMU on the Windows Hypervisor Platform; it
+may offer a way to boot-test Chymaera's ISO from Windows without WSL, which has
+not been checked.
 
 ## The `[omarchy]` repo
 

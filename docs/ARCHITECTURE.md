@@ -12,17 +12,25 @@
    forked. The ISO bakes in only a small hand-picked core (~27 packages in
    `profile/packages.x86_64`); everything beyond it is installed after the
    fact, agent-assisted, by Sarina. See "Tool delivery" below for why.
-3. **Desktop**: [KDE Plasma](https://github.com/kde/plasma-desktop) via the
-   `plasma-meta` group + `sddm` + a small set of core apps (Dolphin, Konsole,
-   Kate, Ark, Okular), plus NetworkManager/PipeWire for a normal desktop
-   experience (`profile/packages.x86_64` layers these on top of releng's
-   more CLI/live-boot-oriented networking and audio stack).
+3. **Desktop**: two sessions, selectable at the SDDM greeter. An
+   [Omarchy](https://github.com/omacom/omarchy)-derived Hyprland session with a
+   switchable macOS-style "stealth" look is the intended primary; KDE Plasma
+   (`plasma-meta` + `sddm` + Dolphin, Konsole, Kate, Ark, Okular) is the
+   fallback and is still the live medium's autologin session until Hyprland is
+   made the default. NetworkManager and PipeWire serve both
+   (`profile/packages.x86_64` layers these on top of releng's more
+   CLI/live-boot-oriented networking and audio stack). The Hyprland design and
+   what is unverified are in [DESKTOP.md](DESKTOP.md).
 4. **Installer**: [Calamares](https://codeberg.org/Calamares/calamares) as
-   the primary graphical, live-session installer (fits a KDE-Plasma-first
-   distro better than `archinstall`'s TUI). It's AUR-only, not in Arch's
+   the primary graphical, live-session installer (a graphical wizard suits a
+   live USB better than `archinstall`'s TUI). It's AUR-only, not in Arch's
    official repos, so it's vendored at `packages/pkgbuilds/calamares` and
-   built the same way as Sarina, into the `[chymaera]` repo. `archinstall`
-   stays in `packages.x86_64` (from releng) as a CLI/scripted alternative.
+   built the same way as Sarina, into the `[chymaera]` repo. It installs by
+   copying the live squashfs rather than running `pacstrap`, which is what
+   makes it quick and lets it work offline; its configuration ships in
+   `profile/airootfs/etc/calamares/`. How and why, and what is unverified, is
+   in [INSTALLER.md](INSTALLER.md). `archinstall` stays in `packages.x86_64`
+   (from releng) as a CLI/scripted alternative.
 5. **AI agent**: [Sarina](https://github.com/chymaera3301/Sarina), a private
    repo vendored as a git submodule at `packages/sarina`, packaged for the
    ISO by `packages/pkgbuilds/sarina-git`.
@@ -119,7 +127,10 @@ checkout's `scripts/run_archiso.sh` boots a built ISO in QEMU.
 ## Live session
 
 The live medium autologins a passwordless `live` user straight into Plasma
-(Wayland). Getting there took three things that are each easy to get wrong:
+(Wayland). Everything in this section is live-medium only: the installer strips
+it from the installed system (`chymaera-install-cleanup`, see
+[INSTALLER.md](INSTALLER.md)). Getting here took three things that are each easy
+to get wrong:
 
 **The user is created by `sysusers.d`, not by shipping `/etc/passwd`.**
 archiso's releng profile ships a two-line `airootfs/etc/passwd` containing only
@@ -145,8 +156,10 @@ Shipping a real machine-id does not help, because mkarchiso overwrites it. So
 one.** The account has no password, so anything that asks for one strands the
 user. That is why the profile also ships `sudoers.d` and a polkit rule granting
 `wheel` unprompted access, and disables Plasma's screen locker via
-`/etc/xdg/kscreenlockerrc`. All three are live-medium only — Calamares writes
-the installed system's own policy, and none of this reaches it.
+`/etc/xdg/kscreenlockerrc`. All three are live-medium only: Calamares writes
+the installed system's own policy, and `chymaera-install-cleanup` deletes the
+live files so none of this reaches it. That script keeps its own list of these
+files, so a new live-only file has to be added there too.
 
 ## Desktop look
 
@@ -248,9 +261,13 @@ command, a systemd timer, a Plasma applet, etc. — TBD).
 - Sequencing: the lean ISO assumes Sarina will deliver tools post-install, and
   that capability does not exist yet. Until it does, Chymaera ships less
   tooling than it did as a concept. That is an accepted, temporary cost.
-- Calamares branding/module config (`settings.yml`, `branding.desc`, a
-  `chymaera-calamares-config` package) — currently ships with generic
-  upstream defaults.
+- Calamares: the job sequence, `unpackfs` source and a post-unpack cleanup are
+  configured but **have never been run** (see [INSTALLER.md](INSTALLER.md)).
+  Still on upstream defaults: branding (`branding.desc`, logo, slideshow),
+  partition and user defaults, and the required-disk-space check. Whether to
+  package the config as a `chymaera-calamares-config` package or keep it in
+  `airootfs` (as now) is open; `airootfs` works because Calamares only runs on
+  the live medium.
 - Chymaera's own identity on top of the MacTahoe base: logo, a Chymaera
   wallpaper, and a Calamares branding module. The desktop currently looks
   like macOS, not like Chymaera.

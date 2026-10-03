@@ -13,7 +13,13 @@ bootmodes=('bios.syslinux'
            'uefi.systemd-boot')
 pacman_conf="pacman.conf"
 airootfs_image_type="squashfs"
-airootfs_image_tool_options=('-comp' 'xz' '-Xbcj' 'x86,arm64' '-b' '1M' '-Xdict-size' '1M')
+# zstd, not releng's xz. The installer copies this image (Calamares unpackfs), so
+# decompression speed is install speed, and zstd decompresses several times faster
+# than xz. The cost is a larger ISO; measure it from a CI build rather than
+# trusting this comment, and revert to releng's
+#   ('-comp' 'xz' '-Xbcj' 'x86,arm64' '-b' '1M' '-Xdict-size' '1M')
+# if the size is not acceptable. See docs/INSTALLER.md.
+airootfs_image_tool_options=('-comp' 'zstd' '-Xcompression-level' '19' '-b' '1M')
 bootstrap_tarball_compression=('zstd' '-c' '-T0' '--auto-threads=logical' '--long' '-19')
 # releng also chmods /root/.automated_script.sh, /root/.gnupg, and three
 # console-oriented /usr/local/bin scripts (choose-mirror, Installation_guide,
@@ -30,6 +36,8 @@ file_permissions=(
   # Not a symlink and not created by any package, so without this line the
   # desktop-mode toggle would ship non-executable and SUPER + F12 would do nothing.
   ["/usr/local/bin/chymaera-desktop-mode"]="0:0:755"
+  # Calamares runs this in the target after unpackfs; see etc/calamares/settings.conf.
+  ["/usr/local/bin/chymaera-install-cleanup"]="0:0:755"
   # Trailing slash matters: mkarchiso only recurses (chown -fhR) when the path
   # ends in one. 1000:1000 is numeric because the live user does not exist at
   # build time -- sysusers.d/live.conf creates it at boot, pinned to uid 1000.

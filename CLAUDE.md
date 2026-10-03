@@ -12,7 +12,9 @@ vendored here as a submodule.
 
 Read `docs/ARCHITECTURE.md` before making design decisions; it records *why*
 the current structure exists (a small baked-in tool core over BlackArch
-category groups, Calamares over `archinstall`, etc.).
+category groups, Calamares over `archinstall`, etc.). `docs/DESKTOP.md` covers
+the Hyprland/Omarchy desktop and `docs/INSTALLER.md` the Calamares install flow;
+both separate what was verified from what was not.
 
 ## The build cannot run on this machine
 
@@ -97,6 +99,25 @@ airootfs onto the pacstrapped root without re-running `systemd-sysusers`, so
 those files *replace* rather than merge. You would delete all 38 service
 accounts in the image, `sddm` included, and the greeter would never start. Add
 accounts through `airootfs/etc/sysusers.d/` instead.
+
+**The installer copies the live squashfs; it does not pacstrap, and the live
+image is not an installable root.** Calamares' `unpackfs` rsyncs
+`airootfs.sfs` onto the disk (`profile/airootfs/etc/calamares/`, details in
+`docs/INSTALLER.md`). Four traps, each of which produces an install that
+"succeeds" and then fails later:
+
+- mkarchiso deletes everything in `/boot` from the image, so the target has no
+  kernel, and the image's initramfs preset and `mkinitcpio.conf.d/archiso.conf`
+  are archiso's. `chymaera-install-cleanup` restores both. Do not remove it.
+- That script keeps its own list of live-only files (sudoers, polkit, SDDM
+  autologin, `kscreenlockerrc`, ...). Add any new live-only file to it as well
+  as to `airootfs/`; nothing checks the two against each other.
+- The squashfs path in `modules/unpackfs.conf` contains `install_dir`
+  (`chymaera`, not archiso's `arch`). Change one and you must change the other.
+- Every module in `settings.conf`'s sequence must be one the PKGBUILD actually
+  builds. `-DSKIP_MODULES` removes `initramfs` among others; listing a skipped
+  module breaks Calamares at startup. The Calamares config is **unrun**: it
+  has only been checked statically and against a mock root.
 
 **`profile/` is a fork of archiso's `releng` profile**, kept deliberately close
 to upstream. When something is missing, copy it verbatim from

@@ -192,7 +192,8 @@ wireguard-tools
 # packages/pkgbuilds/calamares into the [chymaera] repo, same as sarina-git.
 # archinstall (releng base, above) stays available as a CLI/scripted option;
 # Calamares is meant to be the primary live-session installer. No Chymaera
-# branding/module config yet — see docs/ARCHITECTURE.md.
+# branding yet. The job sequence is in airootfs/etc/calamares/ — see
+# docs/INSTALLER.md.
 calamares
 
 # --- desktop theming (macOS-like look) ---

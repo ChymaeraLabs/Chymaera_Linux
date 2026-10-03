@@ -3,9 +3,13 @@
 # Upstream source: https://codeberg.org/Calamares/calamares (the GitHub repo
 # is archived; Codeberg is where Calamares development moved).
 #
-# Kept as-is from AUR for now — no Chymaera branding/module config yet.
-# A distro-specific `chymaera-calamares-config` package (settings.yml,
-# branding.desc, module tweaks) is still TODO; see docs/ARCHITECTURE.md.
+# Kept as-is from AUR. The Chymaera job sequence and module config are NOT in
+# this package: they ship in profile/airootfs/etc/calamares/ and override the
+# sample config that INSTALL_CONFIG=ON installs here (whose unpackfs source is a
+# developer file). Branding is still upstream's; see docs/INSTALLER.md.
+#
+# The sequence in that settings.conf may only name modules this build produces.
+# _skip_modules below removes `initramfs` among others, so it must not be listed.
 # Bump pkgver/sha256sums here when updating, same as any AUR package.
 
 _pkgname="calamares"

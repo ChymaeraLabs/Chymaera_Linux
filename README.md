@@ -31,8 +31,8 @@ predictable release/support cadence. But Kali isn't developed in the open on
 GitHub, and BlackArch (which *is* on GitHub) ships its full tool catalog by
 default, which can make the base system less stable for daily use. Chymaera
 aims to sit between them: an openly developed, Arch-based system with a
-deliberately small default tool set, a polished KDE Plasma desktop, and an
-AI agent built in to help with recon, scripting, analysis, and general system
+deliberately small default tool set, a polished desktop (Hyprland, with KDE
+Plasma as the fallback session), and an AI agent built in to help with recon, scripting, analysis, and general system
 tasks.
 
 ## How tooling is delivered
@@ -91,14 +91,14 @@ Chymaera_Linux/
 │   ├── profiledef.sh         # ISO metadata (name, label, boot modes, etc.)
 │   ├── packages.x86_64       # package list installed into the ISO/target system
 │   ├── pacman.conf           # repo config: core/extra + [blackarch] + [chymaera]
-│   └── airootfs/             # files overlaid onto the live system's root
+│   └── airootfs/             # files overlaid onto the live system's root (incl. etc/calamares/)
 ├── packages/
 │   ├── sarina/                # git submodule: Sarina source (private repo)
 │   └── pkgbuilds/
 │       ├── sarina-git/        # PKGBUILD building packages/sarina locally
 │       └── calamares/         # vendored AUR PKGBUILD (graphical installer)
 ├── repo/                     # local pacman repo built from pkgbuilds (gitignored contents)
-├── docs/                     # Architecture (ARCHITECTURE.md) and desktop design (DESKTOP.md)
+├── docs/                     # ARCHITECTURE.md, DESKTOP.md (Hyprland/Omarchy), INSTALLER.md (Calamares)
 ├── scripts/                  # Build/dev helper scripts
 ├── CLAUDE.md                 # Guidance for AI agents working in this repo
 └── .github/workflows/        # CI: build (and eventually publish) the ISO
@@ -142,9 +142,19 @@ normal way to build and boot-test. Two things matter:
 
 Early, but building. The archiso profile, BlackArch repo wiring, KDE Plasma
 package set, Calamares packaging and Sarina packaging are in place, and the
-package set resolves cleanly (837 packages, no conflicts). Not yet done: the
-agent-assisted install flow, tool categorisation, Chymaera branding, and any
-Calamares configuration beyond upstream defaults. Expect rapid changes.
+package set resolves cleanly (837 packages, no conflicts). The Hyprland session
+is boot-tested in a VM.
+
+The installer is configured but **has never been run**: Calamares copies the live
+squashfs to disk instead of rebuilding the system, which is meant to make it fast
+and work offline ([docs/INSTALLER.md](docs/INSTALLER.md)). Until someone boots
+the ISO and installs it, treat installation as unproven; the live session is the
+tested part. Install speed and the larger ISO that zstd compression produces have
+not been measured.
+
+Not yet done: the agent-assisted install flow, tool categorisation, Chymaera
+branding (including the installer's), Omarchy's Quickshell shell, and testing on
+real GPU hardware. Expect rapid changes.
 
 ## Sarina
 
@@ -183,7 +193,8 @@ To pull in the latest Sarina code:
 
 - [Calamares](https://codeberg.org/Calamares/calamares) — the primary
   graphical, live-session installer (AUR-only; vendored at
-  `packages/pkgbuilds/calamares`). GitHub's copy is archived; Codeberg is
+  `packages/pkgbuilds/calamares`, configured in
+  `profile/airootfs/etc/calamares/`). GitHub's copy is archived; Codeberg is
   where development moved.
 - [archinstall](https://github.com/archlinux/archinstall) — Arch's guided
   CLI installer; kept available as a scripted alternative to Calamares.
@@ -199,7 +210,13 @@ To pull in the latest Sarina code:
 - [Sarina](https://github.com/chymaera3301/Sarina) — the AI agent
   integrated into the OS (private repo, submodule at `packages/sarina`).
 - [Omarchy](https://github.com/omacom/omarchy) — the Hyprland desktop this
-  project's session, keybindings and look-switching are modelled on (MIT).
+  project's session, keybindings and look-switching are modelled on (MIT). Its
+  install scripts were read as a reference for the installer; nothing from them
+  is used yet ([docs/INSTALLER.md](docs/INSTALLER.md)).
+- [Try Omarchy for Windows](https://github.com/omacom/try-omarchy-windows) —
+  runs Omarchy in QEMU on the Windows Hypervisor Platform from a prebuilt
+  image. A possible route to boot-testing Chymaera's ISO from Windows without
+  WSL; not evaluated for that yet.
 
 ## License
 
